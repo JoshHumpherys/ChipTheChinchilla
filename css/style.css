@@ -25,6 +25,13 @@ body {
 
 #container div {
     position: absolute;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
 }
 
 .bg {
@@ -42,6 +49,34 @@ body {
     font-family: 'Lucida Sans Unicode';
     font-size: 2.5em;
     font-variant: small-caps;
+}
+
+.hs {
+    width: 100%;
+    top: 40%;
+    text-align: center;
+    font-family: 'Lucida Sans Unicode';
+    white-space: pre-wrap;
+    display: flex;
+    flex-direction: column;
+}
+
+.hs div {
+    position: relative;
+}
+
+.hs #hsList {
+    display: flex;
+}
+
+.hs #nameCol {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.hs .filler {
+    display: flex;
+    flex: 1;
 }
 
 #overlay {
