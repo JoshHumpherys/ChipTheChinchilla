@@ -1,6 +1,57 @@
 var NUM_HIGH_SCORES = 5;
+var GAME_STATES = {
+    menu: 'menu',
+    alive: 'alive',
+    dead: 'dead',
+    transition: 'transition'
+};
+
+var gameState = GAME_STATES['menu'];
 
 window.onload = function () {
+    menu();
+};
+
+window.onkeydown = function (e) {
+    switch(gameState) {
+    case GAME_STATES['menu']:
+        transition(GAME_STATES['alive']);
+        break;
+    case GAME_STATES['alive']:
+        jump();
+        break;
+    case GAME_STATES['dead']:
+        transition(GAME_STATES['menu']);
+        break;
+    }
+};
+
+var loop = function (e) {
+    switch(gameState) {
+    case GAME_STATES['menu']:
+        break;
+    case GAME_STATES['alive']:
+        update();
+        setTimeout(loop, 17);
+        break;
+    case GAME_STATES['dead']:
+        break;
+    }
+};
+
+var start = function () {
+    var container = document.getElementById('container');
+    while(container.hasChildNodes()) {
+        container.removeChild(container.lastChild);
+    }
+    loop();
+};
+
+var jump = function () {
+    console.log('jump')
+};
+
+var menu = function () {
     // resize container to 16:9
     var frame = document.getElementById('frame');
     frame.style.width = frame.clientHeight / 16 * 9 + 'px';
@@ -22,13 +73,12 @@ window.onload = function () {
     title.innerHTML = 'Chip the Chinchilla';
     container.appendChild(title);
 
-    // var hsList = getHighScoreStrings();
-    // if(Object.keys(hsList).length > 0) {
-    //     var hs = document.createElement('div');
-    //     hs.className = 'hs';
-    //     hs.innerHTML = 'Best Climbs:<br /><br />'+hsList.join('<br />');
-    //     container.appendChild(hs);
-    // }
+    var help = document.createElement('div');
+    help.className = 'help';
+    help.innerHTML = '(click or press any key to start)';
+    container.appendChild(help);
+    help.style.top = title.offsetTop + title.clientHeight + 'px';
+
     var hsList = getHighScoreObjects();
     if(hsList.length > 0) {
         var hs = document.createElement('div');
@@ -36,16 +86,15 @@ window.onload = function () {
         var hsHeading = document.createElement('div');
         hsHeading.innerHTML = 'Best Climbs:';
         hsHeading.style.position = 'relative';
-        var createCol = function (id) {
+        var createCol = function () {
             var col = document.createElement('div');
-            col.id = id;
             col.innerHTML = '<br />';
             col.style.position = 'relative';
             return col;
         }
-        var placeCol = createCol('placeCol');
-        var nameCol = createCol('nameCol');
-        var scoreCol = createCol('scoreCol');
+        var placeCol = createCol();
+        var nameCol = createCol();
+        var scoreCol = createCol();
         for(var i = 0; i < hsList.length; i++) {
             placeCol.innerHTML += i + 1 + ') <br />';
             nameCol.innerHTML += hsList[i].name + '<br />';
@@ -68,9 +117,34 @@ window.onload = function () {
         hs.appendChild(hsHeading);
         hs.appendChild(colContainer);
         container.appendChild(hs);
-
-        document.getElementById('placeCol').style.minWidth = scoreCol.clientWidth + 'px';
+        placeCol.style.minWidth = scoreCol.clientWidth + 'px';
     }
+};
+
+var transition = function (state) {
+    gameState = GAME_STATES['transition'];
+    var overlay = document.getElementById('overlay');
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 1)';
+    setTimeout(function () {
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+        gameState = state;
+        switch(state) {
+        case GAME_STATES['alive']:
+            start();
+            break;
+        case GAME_STATES['menu']:
+            menu();
+            break;
+        }
+    }, 500);
+};
+
+var update = function () {
+
+}
+
+var kill = function () {
+    gameState = GAME_STATES['dead'];
 };
 
 var requestName = function () {
