@@ -35,7 +35,7 @@ body {
 }
 
 .bg {
-    background-image: url(../img/bg.png);
+    background-image: url(../ChipTheChinchilla/img/bg.png);
     background-size: cover;
     position: absolute;
     width: 100%;
@@ -86,7 +86,7 @@ body {
 }
 
 .tree {
-    background: url(../img/log_spruce.png) center repeat-y;
+    background: url(../ChipTheChinchilla/img/log_spruce.png) center repeat-y;
     background-size: 100% auto;
 }
 

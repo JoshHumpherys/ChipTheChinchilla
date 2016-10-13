@@ -386,7 +386,7 @@ var setHeight = function (element, h) {
 
 // Update chip's background image to the correct frame
 var updateChipFrame = function (chip) {
-    chip.style.backgroundImage = 'url(../img/chip' + chipFrame + '.png)';
+    chip.style.backgroundImage = 'url(../ChipTheChinchilla/img/chip' + chipFrame + '.png)';
 };
 
 var updateChipDir = function (chip) {
@@ -418,7 +418,7 @@ var spawnSnake = function () {
     container.appendChild(snake);
     var img = document.createElement('img');
     img.className = 'snake-img';
-    img.src = '../img/snake.png';
+    img.src = '../ChipTheChinchilla/img/snake.png';
     snake.innerHTML = img.outerHTML;
     snakes.push({ element: snake, x: x, y: -100 });
     nextSnakeSpawnTime = new Date().getTime() + 400 + (20 * Math.max(100 - score, 0) + 100) * Math.random() + (Math.random() < .2 ? 500 : 0);
