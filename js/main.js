@@ -127,10 +127,10 @@ var menu = function () {
     CHIP_X_LEFT = TREE_MARGIN + TREE_WIDTH - 3;
     CHIP_X_RIGHT = 100 - CHIP_X_LEFT - CHIP_WIDTH;
     CHIP_Y = 80;
-    SNAKE_WIDTH = CHIP_WIDTH;
+    SNAKE_WIDTH = CHIP_WIDTH * 2;
     SNAKE_HEIGHT = SNAKE_WIDTH / 10 * 8 / HEIGHT * WIDTH;
-    SNAKE_X_LEFT = CHIP_X_LEFT;
-    SNAKE_X_RIGHT = CHIP_X_RIGHT;
+    SNAKE_X_LEFT = CHIP_X_LEFT - SNAKE_HEIGHT / 3 - 2;
+    SNAKE_X_RIGHT = 100 - SNAKE_X_LEFT - SNAKE_WIDTH;
 
     var img = new Image();
     img.src = 'img/bg.png';
