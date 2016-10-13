@@ -5,7 +5,7 @@ var NUM_HIGH_SCORES = 5;
 var UPDATE_DELAY = 17;
 var NUM_CHIP_FRAMES = 4;
 var MAP_SPEED = 5;
-var JUMP_SPEED = .1;
+var JUMP_SPEED = 8;
 var SCORE_MULTIPLIER = 1/60;
 var GAME_STATES = {
     menu: 'menu',
