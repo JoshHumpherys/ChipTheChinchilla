@@ -1,4 +1,6 @@
 // Game constants
+var WIDTH; // set in menu()
+var HEIGHT; // set in menu()
 var NUM_HIGH_SCORES = 5;
 var UPDATE_DELAY = 17;
 var NUM_CHIP_FRAMES = 4;
@@ -10,6 +12,15 @@ var GAME_STATES = {
     dead: 'dead',
     transition: 'transition'
 };
+
+// Position and dimension constants, set after WIDTH and HEIGHT in menu()
+var TREE_MARGIN;
+var TREE_WIDTH;
+var CHIP_WIDTH;
+var CHIP_HEIGHT;
+var CHIP_X_LEFT;
+var CHIP_X_RIGHT
+var CHIP_Y;
 
 // Game variables
 var gameState = GAME_STATES['menu'];
@@ -60,42 +71,6 @@ var loop = function (e) {
     }
 };
 
-// Initializes the game container by creating and adding the correct elements and
-// starting the game loop
-var start = function () {
-    // Clear container
-    removeAllChildren(container);
-
-    // Add background created in menu()
-    container.appendChild(bg);
-
-    // Add trees
-    leftTree = document.createElement('div');
-    leftTree.className = 'tree left-tree';
-    container.appendChild(leftTree);
-    rightTree = document.createElement('div');
-    rightTree.className = 'tree right-tree';
-    container.appendChild(rightTree);
-
-    // Add chip
-    chip = document.createElement('div');
-    chip.id = 'chip';
-    styleChip(chip);
-    updateChipDir(chip);
-    container.appendChild(chip);
-
-    scoreDisplay = document.createElement('div');
-    scoreDisplay.className = 'score';
-    scoreDisplay.innerHTML = '0m';
-    container.appendChild(scoreDisplay);
-
-    // Update game vars
-    score = 0;
-
-    // Start game loop
-    loop();
-};
-
 // Removes all children from a DOM node
 var removeAllChildren = function (element) {
     while(element.hasChildNodes()) {
@@ -108,18 +83,29 @@ var menu = function () {
     // Clear container
     removeAllChildren(container);
 
-    // resize container to 16:9
+    // Resize container to 16:9
     var frame = document.getElementById('frame');
-    frame.style.width = frame.clientHeight / 16 * 9 + 'px';
+    HEIGHT = frame.clientHeight;
+    WIDTH = HEIGHT / 4 * 3;
+    frame.style.width = WIDTH + 'px';
 
-    // place background image
+    // Place background image
     bg = document.createElement('div');
     bg.className = 'bg';
     container.appendChild(bg);
 
+    // Set position and direction constants base on WIDTH and HEIGHT
+    TREE_MARGIN = 5;
+    TREE_WIDTH = 10;
+    CHIP_WIDTH = 12;
+    CHIP_HEIGHT = CHIP_WIDTH / 620 * 429 / HEIGHT * WIDTH;
+    CHIP_X_LEFT = TREE_MARGIN + TREE_WIDTH - 3;
+    CHIP_X_RIGHT = 100 - CHIP_X_LEFT - CHIP_WIDTH;
+    CHIP_Y = 80;
+
     var img = new Image();
     img.src = 'img/bg.png';
-    img.onload = function() {
+    img.onload = function () {
         bg.style.height = container.clientWidth / img.width * img.height + 'px';
     }
 
@@ -176,6 +162,49 @@ var menu = function () {
     }
 };
 
+// Initializes the game container by creating and adding the correct elements and
+// starting the game loop
+var start = function () {
+    // Clear container
+    removeAllChildren(container);
+
+    // Add background created in menu()
+    container.appendChild(bg);
+
+    // Add trees
+    leftTree = document.createElement('div');
+    leftTree.className = 'tree left-tree';
+    setPosition(leftTree, TREE_MARGIN, -100);
+    setDimensions(leftTree, TREE_WIDTH, 200);
+    container.appendChild(leftTree);
+    rightTree = document.createElement('div');
+    rightTree.className = 'tree right-tree';
+    setPosition(rightTree, 100 - TREE_MARGIN - TREE_WIDTH, -100);
+    setDimensions(rightTree, TREE_WIDTH, 200);
+    container.appendChild(rightTree);
+
+    // Add chip
+    chip = document.createElement('div');
+    chip.id = 'chip';
+    setPosition(chip, CHIP_X_RIGHT, CHIP_Y);
+    setDimensions(chip, CHIP_WIDTH, CHIP_HEIGHT);
+    chip.style.height =
+    styleChip(chip);
+    updateChipDir(chip);
+    container.appendChild(chip);
+
+    scoreDisplay = document.createElement('div');
+    scoreDisplay.className = 'score';
+    scoreDisplay.innerHTML = '0m';
+    container.appendChild(scoreDisplay);
+
+    // Update game vars
+    score = 0;
+
+    // Start game loop
+    loop();
+};
+
 // Properly handles a transition from one game state to another
 var transition = function (state) {
     gameState = GAME_STATES['transition'];
@@ -220,6 +249,46 @@ var update = function () {
     scoreDisplay.innerHTML = parseInt(score) + 'm';
 };
 
+// All x, y, w, h values are percentages. This utility function converts those
+// percentages to pixels in the horizontal direction.
+var percentHorizontalToPixels = function (percent) {
+    return WIDTH * percent / 100;
+};
+
+// All x, y, w, h values are percentages. This utility function converts those
+// percentages to pixels in the vertical direction.
+var percentVerticalToPixels = function (percent) {
+    return HEIGHT * percent / 100;
+};
+
+// This function takes a DOM node and moves it to the specified position on the
+// screen given in percentages.
+var setPosition = function (element, x, y) {
+    setX(element, x);
+    setY(element, y);
+};
+
+var setX = function (element, x) {
+    element.style.left = percentHorizontalToPixels(x) + 'px';
+};
+
+var setY = function (element, y) {
+    element.style.top = percentVerticalToPixels(y) + 'px';
+};
+
+var setDimensions = function (element, w, h) {
+    setWidth(element, w);
+    setHeight(element, h);
+};
+
+var setWidth = function (element, w) {
+    element.style.width = percentHorizontalToPixels(w) + 'px';
+};
+
+var setHeight = function (element, h) {
+    element.style.height = percentVerticalToPixels(h) + 'px';
+};
+
 // Update chip's background image to the correct frame
 var styleChip = function (chip) {
     chip.style.backgroundImage = 'url(../img/chip' + chipFrame + '.png)';
@@ -234,9 +303,9 @@ var jump = function () {
     left = !left;
     updateChipDir(chip);
     if(left) {
-        chip.style.left = 37 + 'px';
+        setX(chip, CHIP_X_LEFT);
     } else {
-        chip.style.left = 310 + 'px';
+        setX(chip, CHIP_X_RIGHT);
     }
 };
 
