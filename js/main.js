@@ -4,9 +4,10 @@ var HEIGHT; // set in menu()
 var NUM_HIGH_SCORES = 5;
 var UPDATE_DELAY = 17;
 var NUM_CHIP_FRAMES = 4;
-var MAP_SPEED = 5;
+var MAP_SPEED = 8;
+var SNAKE_SPEED = 1;
 var JUMP_SPEED = 8;
-var SCORE_MULTIPLIER = 1/60;
+var SCORE_MULTIPLIER = 1/20;
 var GAME_STATES = {
     menu: 'menu',
     alive: 'alive',
@@ -28,6 +29,10 @@ var CHIP_HEIGHT;
 var CHIP_X_LEFT;
 var CHIP_X_RIGHT
 var CHIP_Y;
+var SNAKE_WIDTH;
+var SNAKE_HEIGHT;
+var SNAKE_X_LEFT;
+var SNAKE_X_RIGHT;
 
 // Game variables
 var gameState = GAME_STATES['menu'];
@@ -36,9 +41,10 @@ var chipFrame = 0;
 var treeTop = 0;
 var score = 0;
 var chipState = CHIP_STATES['right'];
-var jumping = false;
 var chipX;
 var chipY;
+var snakes = [];
+var nextSnakeSpawnTime = 0;
 
 // References to DOM nodes
 var container;
@@ -81,8 +87,9 @@ var loop = function (e) {
     case GAME_STATES['menu']:
         break;
     case GAME_STATES['alive']:
-        update();
-        setTimeout(loop, UPDATE_DELAY);
+        if(update()) {
+            setTimeout(loop, UPDATE_DELAY);
+        }
         break;
     case GAME_STATES['dead']:
         break;
@@ -120,6 +127,10 @@ var menu = function () {
     CHIP_X_LEFT = TREE_MARGIN + TREE_WIDTH - 3;
     CHIP_X_RIGHT = 100 - CHIP_X_LEFT - CHIP_WIDTH;
     CHIP_Y = 80;
+    SNAKE_WIDTH = CHIP_WIDTH;
+    SNAKE_HEIGHT = SNAKE_WIDTH / 10 * 8 / HEIGHT * WIDTH;
+    SNAKE_X_LEFT = CHIP_X_LEFT;
+    SNAKE_X_RIGHT = CHIP_X_RIGHT;
 
     var img = new Image();
     img.src = 'img/bg.png';
@@ -159,6 +170,7 @@ var menu = function () {
             nameCol.innerHTML += hsList[i].name + '<br />';
             scoreCol.innerHTML += hsList[i].value + 'm<br />';
         }
+        nameCol.id = 'nameCol';
         var colContainer = document.createElement('div');
         colContainer.id = 'hsList';
         colContainer.style.position = 'relative';
@@ -219,6 +231,11 @@ var start = function () {
 
     // Update game vars
     score = 0;
+    snakes = [];
+    chipState = CHIP_STATES['right'];
+
+    // spawn a snake to get the chain started
+    spawnSnake();
 
     // Start game loop
     loop();
@@ -286,7 +303,46 @@ var update = function () {
     }
 
     setX(chip, chipX);
+
+    var toKill = false;
+    for(var i = 0; i < snakes.length; i++) {
+        var snake = snakes[i];
+        var y = snake.y + SNAKE_SPEED;
+        if (y > 100) {
+            container.removeChild(snake.element);
+            snakes.splice(i, 1);
+        } else {
+            snake.y = y;
+            setY(snake.element, y);
+            if(!toKill && checkCollision(chipX, chipY, snake.x, snake.y)) {
+                toKill = true;
+            }
+        }
+    }
+
+    if(!toKill && new Date().getTime() > nextSnakeSpawnTime) {
+        spawnSnake();
+    }
+
+    if(toKill) {
+        kill();
+        return false;
+    }
+
+    return true;
 };
+
+var checkCollision = function (chipX, chipY, snakeX, snakeY) {
+    chipX += CHIP_WIDTH / 5;
+    chipWidth = CHIP_WIDTH * 3 / 5;
+    chipY += CHIP_HEIGHT / 7;
+    chipHeight = CHIP_HEIGHT * 5 / 7;
+    snakeX += SNAKE_WIDTH * 2 / 5;
+    snakeWidth = SNAKE_WIDTH * 1 / 5;
+    snakeY = snakeY;
+    snakeHeight = SNAKE_HEIGHT;
+    return chipX + chipWidth > snakeX && chipX < snakeX + snakeWidth && chipY + chipHeight > snakeY && chipY < snakeY + snakeHeight;
+}
 
 // All x, y, w, h values are percentages. This utility function converts those
 // percentages to pixels in the horizontal direction.
@@ -349,11 +405,30 @@ var jump = function () {
 // Kills Chip and handles state transition
 var kill = function () {
     gameState = GAME_STATES['dead'];
+    setPotentialHighScore(parseInt(score));
+};
+
+var spawnSnake = function () {
+    var snake = document.createElement('div');
+    var left = Math.random() < .5;
+    snake.className = 'snake ' + (left ? 'left-snake' : 'right-snake');
+    var x = left ? SNAKE_X_LEFT : SNAKE_X_RIGHT;
+    setPosition(snake, x, -100);
+    setDimensions(snake, SNAKE_WIDTH, SNAKE_HEIGHT);
+    container.appendChild(snake);
+    var img = document.createElement('img');
+    img.className = 'snake-img';
+    img.src = '../img/snake.png';
+    snake.innerHTML = img.outerHTML;
+    snakes.push({ element: snake, x: x, y: -100 });
+    nextSnakeSpawnTime = new Date().getTime() + 400 + (20 * Math.max(100 - score, 0) + 100) * Math.random() + (Math.random() < .2 ? 500 : 0);
+
 };
 
 // Requests the players name for saving high scores
 var requestName = function () {
-    return prompt("Enter name:");
+    var name = prompt("Congrats! You got a new high score!\nPlease enter your name:");
+    return name || requestName();
 };
 
 // Sets cookies to save the high scores
@@ -367,11 +442,14 @@ var setPotentialHighScore = function (score) {
     var objects = getHighScoreObjects();
     for(var i = 0; i < NUM_HIGH_SCORES; i++) {
         if(i >= objects.length || score >= objects[i].value) {
-            var name = requestName();
-            for(var j = objects.length - (objects.length < NUM_HIGH_SCORES ? 0 : 1); j > i; j--) {
-                setHighScore(objects[j - 1].name, objects[j - 1].value, j);
-            }
-            setHighScore(name, score, i);
+            var name = '';
+            setTimeout(function () {
+                name = requestName();
+                for(var j = objects.length - (objects.length < NUM_HIGH_SCORES ? 0 : 1); j > i; j--) {
+                    setHighScore(objects[j - 1].name, objects[j - 1].value, j);
+                }
+                setHighScore(name, score, i);
+            }, 100);
             break;
         }
     }
