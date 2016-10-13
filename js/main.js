@@ -44,7 +44,16 @@ window.onload = function () {
     menu();
 };
 
-window.ontouchstart = window.onkeydown = function (e) {
+window.ontouchstart = function (e) {
+    e.preventDefault();
+    handleInput(e);
+};
+
+window.onkeydown = function (e) {
+    handleInput(e);
+};
+
+var handleInput = function (e) {
     switch(gameState) {
     case GAME_STATES['menu']:
         transition(GAME_STATES['alive']);
