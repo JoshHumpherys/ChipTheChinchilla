@@ -5,6 +5,7 @@ var NUM_HIGH_SCORES = 5;
 var UPDATE_DELAY = 17;
 var NUM_CHIP_FRAMES = 4;
 var MAP_SPEED = 5;
+var JUMP_SPEED = .1;
 var SCORE_MULTIPLIER = 1/60;
 var GAME_STATES = {
     menu: 'menu',
@@ -12,6 +13,12 @@ var GAME_STATES = {
     dead: 'dead',
     transition: 'transition'
 };
+var CHIP_STATES = {
+    left: 'left',
+    right: 'right',
+    movingLeft: 'movingLeft',
+    movingRight: 'movingRight'
+}
 
 // Position and dimension constants, set after WIDTH and HEIGHT in menu()
 var TREE_MARGIN;
@@ -28,8 +35,10 @@ var numChipFrames = 0;
 var chipFrame = 0;
 var treeTop = 0;
 var score = 0;
-var left = false;
+var chipState = CHIP_STATES['right'];
 var jumping = false;
+var chipX;
+var chipY;
 
 // References to DOM nodes
 var container;
@@ -195,10 +204,11 @@ var start = function () {
     // Add chip
     chip = document.createElement('div');
     chip.id = 'chip';
-    setPosition(chip, CHIP_X_RIGHT, CHIP_Y);
+    chipX = CHIP_X_RIGHT;
+    chipY = CHIP_Y;
+    setPosition(chip, chipX, chipY);
     setDimensions(chip, CHIP_WIDTH, CHIP_HEIGHT);
-    chip.style.height =
-    styleChip(chip);
+    updateChipFrame(chip);
     updateChipDir(chip);
     container.appendChild(chip);
 
@@ -236,13 +246,15 @@ var transition = function (state) {
 // Main update function called from the game loop
 var update = function () {
     // Update chip's image
-    if(numChipFrames >= NUM_CHIP_FRAMES) {
+    if(chipState === CHIP_STATES['movingRight'] || chipState === CHIP_STATES['movingLeft']) {
+        chipFrame = 0;
+    } else if(numChipFrames >= NUM_CHIP_FRAMES) {
         numChipFrames = 0;
         chipFrame = (chipFrame + 1) % 4;
     } else {
         numChipFrames++;
     }
-    styleChip(chip);
+    updateChipFrame(chip);
 
     // Update trees
     var height = leftTree.clientHeight / 2;
@@ -256,6 +268,24 @@ var update = function () {
 
     score += SCORE_MULTIPLIER;
     scoreDisplay.innerHTML = parseInt(score) + 'm';
+
+    if(chipState === CHIP_STATES['movingLeft']) {
+        chipX -= JUMP_SPEED;
+        updateChipDir(chip);
+    } else if(chipState === CHIP_STATES['movingRight']) {
+        chipX += JUMP_SPEED;
+        updateChipDir(chip);
+    }
+
+    if(chipX < CHIP_X_LEFT) {
+        chipX = CHIP_X_LEFT;
+        chipState = CHIP_STATES['left'];
+    } else if(chipX > CHIP_X_RIGHT) {
+        chipX = CHIP_X_RIGHT;
+        chipState = CHIP_STATES['right'];
+    }
+
+    setX(chip, chipX);
 };
 
 // All x, y, w, h values are percentages. This utility function converts those
@@ -299,22 +329,20 @@ var setHeight = function (element, h) {
 };
 
 // Update chip's background image to the correct frame
-var styleChip = function (chip) {
+var updateChipFrame = function (chip) {
     chip.style.backgroundImage = 'url(../img/chip' + chipFrame + '.png)';
 };
 
 var updateChipDir = function (chip) {
-    chip.className = (left ? 'left' : 'right') + '-chip';
+    chip.className = (chipX + CHIP_WIDTH / 2 < 100 / 2 ? 'left' : 'right') + '-chip';
 };
 
 // Handles a jump from one side to the other
 var jump = function () {
-    left = !left;
-    updateChipDir(chip);
-    if(left) {
-        setX(chip, CHIP_X_LEFT);
-    } else {
-        setX(chip, CHIP_X_RIGHT);
+    if(chipState === CHIP_STATES['left']) {
+        chipState = CHIP_STATES['movingRight'];
+    } else if(chipState === CHIP_STATES['right']) {
+        chipState = CHIP_STATES['movingLeft'];
     }
 };
 
