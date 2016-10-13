@@ -44,7 +44,7 @@ window.onload = function () {
     menu();
 };
 
-window.onkeydown = function (e) {
+window.ontouchstart = window.onkeydown = function (e) {
     switch(gameState) {
     case GAME_STATES['menu']:
         transition(GAME_STATES['alive']);
