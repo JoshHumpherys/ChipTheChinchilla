@@ -85,6 +85,58 @@ body {
     flex: 1;
 }
 
+.tree {
+    width: 40px;
+    height: 200%;
+    background: url(../img/log_spruce.png) center repeat-y;
+    background-size: 100% auto;
+}
+
+.left-tree {
+    left: 10px;
+}
+
+.right-tree {
+    right: 10px;
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+#chip {
+    top: 500px;
+    left: 310px;
+    width: 62px;
+    height: 43px;
+    background-size: cover;
+}
+
+.right-chip {
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+}
+
+.left-chip {
+    -webkit-transform: rotate(-90deg) scaleY(-1);
+    -moz-transform: rotate(-90deg) scaleY(-1);
+    -ms-transform: rotate(-90deg) scaleY(-1);
+    -o-transform: rotate(-90deg) scaleY(-1);
+    transform: rotate(-90deg) scaleY-1);
+}
+
+.score {
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    font-family: 'Lucida Sans Unicode';
+    font-size: 2em;
+}
+
 #overlay {
     position: absolute;
     width: 100%;

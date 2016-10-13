@@ -1,4 +1,9 @@
+// Game constants
 var NUM_HIGH_SCORES = 5;
+var UPDATE_DELAY = 17;
+var NUM_CHIP_FRAMES = 4;
+var MAP_SPEED = 5;
+var SCORE_MULTIPLIER = 1/60;
 var GAME_STATES = {
     menu: 'menu',
     alive: 'alive',
@@ -6,9 +11,25 @@ var GAME_STATES = {
     transition: 'transition'
 };
 
+// Game variables
 var gameState = GAME_STATES['menu'];
+var numChipFrames = 0;
+var chipFrame = 0;
+var treeTop = 0;
+var score = 0;
+var left = false;
+var jumping = false;
+
+// References to DOM nodes
+var container;
+var bg;
+var chip;
+var leftTree;
+var rightTree;
+var scoreDisplay;
 
 window.onload = function () {
+    container = document.getElementById('container');
     menu();
 };
 
@@ -32,34 +53,68 @@ var loop = function (e) {
         break;
     case GAME_STATES['alive']:
         update();
-        setTimeout(loop, 17);
+        setTimeout(loop, UPDATE_DELAY);
         break;
     case GAME_STATES['dead']:
         break;
     }
 };
 
+// Initializes the game container by creating and adding the correct elements and
+// starting the game loop
 var start = function () {
-    var container = document.getElementById('container');
-    while(container.hasChildNodes()) {
-        container.removeChild(container.lastChild);
-    }
+    // Clear container
+    removeAllChildren(container);
+
+    // Add background created in menu()
+    container.appendChild(bg);
+
+    // Add trees
+    leftTree = document.createElement('div');
+    leftTree.className = 'tree left-tree';
+    container.appendChild(leftTree);
+    rightTree = document.createElement('div');
+    rightTree.className = 'tree right-tree';
+    container.appendChild(rightTree);
+
+    // Add chip
+    chip = document.createElement('div');
+    chip.id = 'chip';
+    styleChip(chip);
+    updateChipDir(chip);
+    container.appendChild(chip);
+
+    scoreDisplay = document.createElement('div');
+    scoreDisplay.className = 'score';
+    scoreDisplay.innerHTML = '0m';
+    container.appendChild(scoreDisplay);
+
+    // Update game vars
+    score = 0;
+
+    // Start game loop
     loop();
 };
 
-var jump = function () {
-    console.log('jump')
+// Removes all children from a DOM node
+var removeAllChildren = function (element) {
+    while(element.hasChildNodes()) {
+        element.removeChild(element.lastChild);
+    }
 };
 
+// Initializes the menu by creating and adding the correct elements
 var menu = function () {
+    // Clear container
+    removeAllChildren(container);
+
     // resize container to 16:9
     var frame = document.getElementById('frame');
     frame.style.width = frame.clientHeight / 16 * 9 + 'px';
 
     // place background image
-    var bg = document.createElement('div');
+    bg = document.createElement('div');
     bg.className = 'bg';
-    var container = document.getElementById('container');
     container.appendChild(bg);
 
     var img = new Image();
@@ -76,8 +131,8 @@ var menu = function () {
     var help = document.createElement('div');
     help.className = 'help';
     help.innerHTML = '(click or press any key to start)';
-    container.appendChild(help);
     help.style.top = title.offsetTop + title.clientHeight + 'px';
+    container.appendChild(help);
 
     var hsList = getHighScoreObjects();
     if(hsList.length > 0) {
@@ -121,6 +176,7 @@ var menu = function () {
     }
 };
 
+// Properly handles a transition from one game state to another
 var transition = function (state) {
     gameState = GAME_STATES['transition'];
     var overlay = document.getElementById('overlay');
@@ -139,23 +195,68 @@ var transition = function (state) {
     }, 500);
 };
 
+// Main update function called from the game loop
 var update = function () {
+    // Update chip's image
+    if(numChipFrames >= NUM_CHIP_FRAMES) {
+        numChipFrames = 0;
+        chipFrame = (chipFrame + 1) % 4;
+    } else {
+        numChipFrames++;
+    }
+    styleChip(chip);
 
-}
+    // Update trees
+    var height = leftTree.clientHeight / 2;
+    treeTop += MAP_SPEED;
+    if(height <= treeTop) {
+        treeTop -= height;
+    }
+    var top = -height + treeTop;
+    leftTree.style.top = top + 'px';
+    rightTree.style.top = top + 'px';
 
+    score += SCORE_MULTIPLIER;
+    scoreDisplay.innerHTML = parseInt(score) + 'm';
+};
+
+// Update chip's background image to the correct frame
+var styleChip = function (chip) {
+    chip.style.backgroundImage = 'url(../img/chip' + chipFrame + '.png)';
+};
+
+var updateChipDir = function (chip) {
+    chip.className = (left ? 'left' : 'right') + '-chip';
+};
+
+// Handles a jump from one side to the other
+var jump = function () {
+    left = !left;
+    updateChipDir(chip);
+    if(left) {
+        chip.style.left = 37 + 'px';
+    } else {
+        chip.style.left = 310 + 'px';
+    }
+};
+
+// Kills Chip and handles state transition
 var kill = function () {
     gameState = GAME_STATES['dead'];
 };
 
+// Requests the players name for saving high scores
 var requestName = function () {
     return prompt("Enter name:");
 };
 
+// Sets cookies to save the high scores
 var setHighScore = function (name, value, index) {
     setCookie('hs' + index + 'Name', name);
     setCookie('hs' + index + 'Value', value);
 };
 
+// Checks if a high score needs to up date and if so calls setHighScore
 var setPotentialHighScore = function (score) {
     var objects = getHighScoreObjects();
     for(var i = 0; i < NUM_HIGH_SCORES; i++) {
@@ -170,6 +271,7 @@ var setPotentialHighScore = function (score) {
     }
 };
 
+// Returns nicely parsed high scores as a string array
 var getHighScoreStrings = function () {
     var objects = getHighScoreObjects();
     for(var i = 0; i < objects.length; i++) {
@@ -178,6 +280,7 @@ var getHighScoreStrings = function () {
     return objects;
 };
 
+// Retruns high scores as an array of objects with name and value
 var getHighScoreObjects = function () {
     var hs = [];
     for(var i = 0; i < NUM_HIGH_SCORES; i++) {
@@ -194,12 +297,14 @@ var getHighScoreObjects = function () {
     return hs;
 };
 
+// Utility function to set a cookie
 var setCookie = function(name, value) {
     var expDate = new Date();
     expDate.setYear(expDate.getFullYear() + 10);
     document.cookie = name+'='+value+'; expires='+expDate.toUTCString();
 };
 
+// Utility function to get a cookie
 var getCookie = function(name) {
     name += '=';
     array = document.cookie.split(';');
@@ -215,10 +320,12 @@ var getCookie = function(name) {
     return '';
 };
 
+// Utility function to erase a cookie
 var eraseCookie = function(name) {
     document.cookie = name+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC';
 }
 
+// Utilitiy function to erase all cookies
 var eraseAllCookies = function() {
     array = document.cookie.split(';');
     for(var i = 0; i < array.length; i++) {
